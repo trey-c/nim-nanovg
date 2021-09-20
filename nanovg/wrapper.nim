@@ -136,8 +136,14 @@ import os, strformat
 ##
 ## Note: currently only solid color fill is supported for text.
 
+import strutils
+
+proc dumb(): string {.compileTime.} = 
+  var tmp = currentSourcePath
+  tmp.removeSuffix("wrapper.nim")
+  result = tmp
 const
-  currentDir = splitPath(currentSourcePath).head
+  currentDir = dumb()
 
 const GLVersion* =
   when defined(nvgGL2): "GL2"
@@ -147,8 +153,8 @@ const GLVersion* =
   elif defined(ios) or defined(android): "GLES3"
   else: "GL3"
 
-{.passC: fmt" -I{currentDir}/deps/stb -DNANOVG_{GLVersion}_IMPLEMENTATION",
-  compile: "src/nanovg.c".}
+{.passC: fmt" -I{currentDir}/deps/stb -DNANOVG_{GLVersion}_IMPLEMENTATION"
+  compile: currentDir & "src/nanovg.c".}
 
 when defined(android) or defined(ios):
   # TODO: iOS is not yet tested, includes might be different.
@@ -158,13 +164,13 @@ when defined(android) or defined(ios):
   elif defined(nvgGLES3):
     {.emit: fmt"#include <GLES3/gl3.h>".}
 else:
-  {.compile: "deps/glad.c".}
-  {.emit: fmt"""#include "{currentDir}/deps/glad/glad.h" """.}
+  {.compile: currentDir & "deps/glad.c".}
+  {.emit: fmt"""#include "{currentDir}deps/glad/glad.h" """.}
 
 {.emit: fmt"""
-#include "{currentDir}/src/nanovg.h"
-#include "{currentDir}/src/nanovg_gl.h"
-#include "{currentDir}/src/nanovg_gl_utils.h"
+#include "{currentDir}src/nanovg.h"
+#include "{currentDir}src/nanovg_gl.h"
+#include "{currentDir}src/nanovg_gl_utils.h"
 """.}
 
 #{{{ Types ------------------------------------------------------------------
